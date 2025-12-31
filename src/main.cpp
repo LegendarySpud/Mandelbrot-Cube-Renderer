@@ -11,16 +11,19 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
-float PI = 3.141592653f;
+float fPI = 3.141592653;
+double dPI = 3.141592653;
 
 int scrX = 1000;
 int scrY = 1000;
+int bits = 64;
 
-float zoom = 1.0f;
-float zoomVal = 1.25f;
-float scrollVal = 0.0f;
-int maxIters = 10;
-glm::vec2 pos(-0.216361, 0.817863);//(-0.5f, 0.0f);
+double zoom = 1.0;
+double zoomVal = 1.25;
+double scrollVal = 0.0;
+double scrollTarg = scrollVal;
+int maxIters = 100;
+glm::dvec2 pos(-0.5, 0.0);
 float dt;
 
 float rect[] = {
@@ -57,7 +60,8 @@ int main() {
     // init viewport
     glViewport(0, 0, scrX, scrY);
 
-    Shader shader32("shaders/vShader32.glsl", "shaders/fShader32.glsl");
+    Shader shader32("shaders/p32/vShader32.glsl", "shaders/p32/fShader32.glsl");
+    Shader shader64("shaders/p64/vShader64.glsl", "shaders/p64/fShader64.glsl");
 
     // create vbo, vao
     unsigned int VBO, VAO;
@@ -79,37 +83,47 @@ int main() {
         float fps = 1.0/dt;
         std::string title = "Mandelbrot - " +
                             std::to_string((int)fps) + "fps  " +
-                            std::to_string(int(1.0f/zoom)) + "x zoom  " +
+                            std::to_string(int(1.0/zoom)) + "x zoom  " +
                             std::to_string(maxIters) + " iters";
         glfwSetWindowTitle(window, title.c_str());
-        //zoom = sin(time)/PI;
-        //pos.x = sin(time)/PI;
-        //std::cout << zoom << "\n";
         processInput(window);
 
         glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        shader32.use();
-        shader32.setFloat("ratio", float(scrX)/float(scrY));
-        shader32.setFloat("zoom", zoom);
-        shader32.setVec2("pos", pos);
-        shader32.setInt("maxIters", maxIters);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        if (bits = 32) {
+            shader32.use();
+            shader32.setFloat("ratio", float(scrX)/float(scrY));
+            shader32.setFloat("zoom", (float)zoom);
+            shader32.setVec2("pos", glm::vec2(pos));
+            shader32.setInt("maxIters", maxIters);
+            glBindVertexArray(VAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+        else if (bits = 32) {
+            shader64.use();
+            shader64.setDouble("ratio", double(scrX)/double(scrY));
+            shader64.setFloat("zoom", zoom);
+            shader64.setVec2("pos", pos);
+            shader64.setInt("maxIters", maxIters);
+            glBindVertexArray(VAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
         }
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    shader32.del();
+    shader64.del();
 
     glfwTerminate();
     return 0;
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    scrX = width;
+    scrY = height;
     glViewport(0, 0, width, height);
 }
 
@@ -117,30 +131,35 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
-    float z = zoom;
+    double dDt = double(dt);
+    double z = zoom;
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         maxIters += 1;
+        if (maxIters < 0) {maxIters = 0;}
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
         maxIters -= 1;
+        if (maxIters < 0) {maxIters = 0;}
     }
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        pos.y += z*dt;
+        pos.y += z*dDt;
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        pos.y -= z*dt;
+        pos.y -= z*dDt;
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        pos.x += z*dt;
+        pos.x += z*dDt;
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        pos.x -= z*dt;
+        pos.x -= z*dDt;
     }
-    std::cout << "(" << pos.x << ", " << pos.y << ")\n";
-    std::cout << zoom << "\n";
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        std::cout << "(" << pos.x << ", " << pos.y << ")\n";
+    }
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    scrollVal -= (float)yoffset;
-    zoom = 1.5f*pow(zoomVal, scrollVal);
+    scrollTarg -= yoffset;
+    scrollVal = scrollTarg;
+    zoom = pow(zoomVal, scrollVal);
 }
