@@ -1,8 +1,11 @@
 #version 460 core
 out vec4 FragColour;
-in  vec3 FragPos;
+in  vec4 FragPos;
 
 uniform int maxIters;
+uniform vec3 c1;
+uniform vec3 c2;
+uniform int banding;
 
 void main() {
 	vec2 c = FragPos.xy;
@@ -16,7 +19,10 @@ void main() {
 		iters = i;
 	}
 	float t;
-	if (iters == maxIters-1.0f) {t = 1.0f;}
-	else {t = float(iters %25)/25.0f;}
-	FragColour = vec4(0.0f, t, t, 1.0f);
+	if (iters == maxIters-1.0f) t = 1.0f;
+	else t = float(iters % banding)/float(banding);
+	float r = c1.x + t*(c2.x-c1.x);
+	float g = c1.y + t*(c2.y-c1.y);
+	float b = c1.z + t*(c2.z-c1.z);
+	FragColour = vec4(r, g, b, 1.0f);
 }
