@@ -37,12 +37,10 @@ How to use:
         vector<Shot> shots - vector of camera shots that play when exploration mode is disabled
 
     Notes:
-        This program began as a simple 2d mandelbrot explorer but became a rotating mandelbrot
-        cube
+        This program began as a simple 2d mandelbrot explorer (ver 1, 2) but became a rotating mandelbrot
+        cube (ver 3+)
         Anything mentioning 64 bits is vestigial - from an attempt to implement a double precision
         rendering mode (failed) before implementation of 3d.
-        The colour of the final cube can be modified in fShader32.glsl by modifying the rgb values
-        after "FragColour = "
 */
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
